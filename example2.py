@@ -54,21 +54,24 @@ if __name__ == '__main__':
     start = 0
     stop = 10
     dt = 0.05
-    step = 0.5
-    y0 = 0.5
+    step = 0.0001
+    y0 = 1
 
     # exact
     t1 = np.array([x * dt for x in range(0, int((stop - start) / dt))])
     y1 = t1 * np.sin(t1) + np.cos(t1)
 
     # RK4
-    #t2, y2 = RK4(f, y0, start, stop, step)
+    t2, y2 = RK4(f, y0, start, stop, step)
 
     # adaptive RK4
-    #t3, y3 = RK45(f, y0, start, stop, step, e=0.00001)
+    # The following won't stop execution and converge because the RK45
+    # algorithm diverges
+    #t3, y3 = RK45(f, y0, start, stop, step, e=0.0001)
 
     plt.plot(t1, y1, 'b-', label='exact')
-    #plt.plot(t2, y2, 'r:', label='RK4')
+    plt.plot(t2, y2, 'r:', label='RK4')
+    plt.ylim([-6, 8])
     #plt.plot(t3, y3, 'g^', label='RK45')
     plt.legend()
     plt.show()
