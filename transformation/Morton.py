@@ -1,5 +1,8 @@
 
+from decimal import Decimal
+
 class MortonI2d:
+	# Unsigned Integer inputs
 	def __init__(self, xx, yy, bits):
 		self.x = xx
 		self.y = yy
@@ -24,6 +27,7 @@ class MortonI2d:
 		return self.code < other.code
 
 class MortonIN2d:
+	# Signed integer inputs
 	def __init__(self, xx, yy, bits):
 		self.x = xx
 		self.y = yy
@@ -73,3 +77,10 @@ class MortonI3d:
 
 	def __lt__(self, other):
 		return self.code < other.code
+
+def fexp(number):
+	(sign, digits, exponent) = Decimal(number).as_tuple()
+	return len(digits) + exponent - 1
+
+def fman(number):
+	return Decimal(number).scaleb(-fexp(number)).normalize()
