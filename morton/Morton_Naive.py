@@ -61,9 +61,9 @@ class MortonFloat:
 	def computeCode(self):
 		self.code = 0
 		up = tuple([unpack(">I", pack(">f", self.p[i]))[0] for i in range(self.dim)])
-		bits = 32 * self.dim
+		bits = 32
 		for b in range(bits):
-			ibits = reduce((lambda x, y: x | y), [((up[i] >> (bits - 1 - b)) & 1) << i for i in range(self.dim)])
+			ibits = reduce((lambda x, y: x | y), [((up[i] >> (31 - b)) & 1) << i for i in range(self.dim)])
 			self.code = (self.code << self.dim) | ibits
 
 	def __lt__(self, other):
@@ -84,11 +84,36 @@ class MortonFloatQuick:
 		x = 0
 		d = 0
 		for j in range(self.dim):
-			y = xormsb2(self.p[j], other.p[j])
+			y = xormsb(self.p[j], other.p[j])
 			if x < y:
 				x = y
 				d = j
 		return self.p[d] < other.p[d]
+
+	def __getitem__(self, idx):
+		return self.p[idx]
+
+class MortonSpecial:
+	def __init__(self, pp):
+		self.p = pp
+		self.dim = len(pp)
+		self.computeCode()
+
+	def __lt__(self, other):
+		return self.code < other.code
+
+	def computeCode(self):
+		ip = [unpack(">I", pack(">f", self.p[i]))[0] for i in range(self.dim)]
+		ips = [ip[i]>>31 for i in range(self.dim)]
+		ipn = [(((ip[i] & 0x7FFFFFFF) ^ ips[i]) - ips[i]) + 0x7FFFFFFF for i in range(self.dim)]
+		
+		ipn = [(ipn[i] | (ipn[i] << 16)) & 0x0000ffff0000ffff for i in range(self.dim)]
+		ipn = [(ipn[i] | (ipn[i] <<  8)) & 0x00ff00ff00ff00ff for i in range(self.dim)]
+		ipn = [(ipn[i] | (ipn[i] <<  4)) & 0x0f0f0f0f0f0f0f0f for i in range(self.dim)]
+		ipn = [(ipn[i] | (ipn[i] <<  2)) & 0x3333333333333333 for i in range(self.dim)]
+		ipn = [(ipn[i] | (ipn[i] <<  1)) & 0x5555555555555555 for i in range(self.dim)]
+		
+		self.code = reduce((lambda x, y: x | y), [ipn[i]<<i for i in range(self.dim)])
 
 	def __getitem__(self, idx):
 		return self.p[idx]
@@ -110,11 +135,10 @@ def xormsb2(a, b):
 	xm, xe = frexp(a)
 	ym, ye = frexp(b)
 	if xe == ye:
-		#z = msdb2(decfrac2man(xm), decfrac2man(ym))
-		#xe = xe - z
-		#return xe
+		z = msdb2(unpack(">I", pack(">f", xm))[0], unpack(">I", pack(">f", ym))[0])
+		return xe + z
 		##-----------
-		if ym == xm:
+		"""if ym == xm:
 			return 0
 		else:
 			ai = unpack(">q", pack(">d", xm))[0]
@@ -123,7 +147,7 @@ def xormsb2(a, b):
 			abi = (ai^bi)|zi
 			ab = unpack(">d", pack(">q", abi))[0]
 			ym, ye = frexp(ab - 0.5)
-			return ye + xe
+			return ye + xe"""
 	if ye < xe:
 		return xe
 	return ye
@@ -139,12 +163,14 @@ def decfrac2man(x):
 
 def msdb2(a, b):
 	ab = a ^ b
-	N = 32
-	f = 1<<(N-1)
-	for i in range(N):
-		if f & (ab << i) > 0:
-			return i
-	return 0
+	m, e = frexp(unpack(">f", pack(">I", ab))[0])
+	return e
+	#N = 32
+	#f = 1<<(N-1)
+	#for i in range(N):
+	#	if f & (ab << i) > 0:
+	#		return i
+	#return 0
 
 def msdb(a, b):
 	ab = a ^ b

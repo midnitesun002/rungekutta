@@ -4,9 +4,10 @@ from Morton_Naive import *
 import matplotlib.pyplot as plt
 
 import sys, getopt
+import random
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "b:a:s:p")
+	opts, args = getopt.getopt(sys.argv[1:], "b:a:s:pr")
 except getopt.GetoptError as err:
 	print("incorrect arguments")
 	print(err)
@@ -16,6 +17,7 @@ N = 10
 bits = 4
 method = 1
 plot = False
+randomize = False
 for opt, arg in opts:
 	if opt == "-a":
 		method = int(arg)
@@ -23,17 +25,33 @@ for opt, arg in opts:
 		plot = True
 	elif opt == "-b":
 		bits = int(arg)
+	elif opt == "-r":
+		randomize = True
 	else:
 		assert False, "unhandled option"
 
 if method == 1:
-	codes = [MortonNaive((x, y), bits) for x in range(2**bits) for y in range(2**bits)]
+	if randomize:
+		codes = [MortonNaive((random.randint(0, 2**bits-1), random.randint(0, 2**bits-1)), bits) for x in range(2**bits) for y in range(2**bits)]
+	else:
+		codes = [MortonNaive((x, y), bits) for x in range(2**bits) for y in range(2**bits)]
 elif method == 2:
-	codes = [MortonQuick((x, y), bits) for x in range(2**bits) for y in range(2**bits)]
+	if randomize:
+		codes = [MortonQuick((random.randint(0, 2**bits-1), random.randint(0, 2**bits-1)), bits) for x in range(2**bits) for y in range(2**bits)]
+	else:
+		codes = [MortonQuick((x, y), bits) for x in range(2**bits) for y in range(2**bits)]
 elif method == 3:
-	codes = [MortonFloat((x/2**bits, y/2**bits)) for x in range(2**bits) for y in range(2**bits)]
+	if randomize:
+		codes = [MortonFloat((random.random(), random.random())) for x in range(2**bits) for y in range(2**bits)]
+	else:
+		codes = [MortonFloat((x/2**bits, y/2**bits)) for x in range(2**bits) for y in range(2**bits)]
 elif method == 4:
-	codes = [MortonFloatQuick((x/2**bits, y/2**bits)) for x in range(2**bits) for y in range(2**bits)]
+	if randomize:
+		codes = [MortonFloatQuick((random.random(), random.random())) for x in range(2**bits) for y in range(2**bits)]
+	else:
+		codes = [MortonFloatQuick((x/2**bits, y/2**bits)) for x in range(2**bits) for y in range(2**bits)]
+elif method == 5:
+	codes = [MortonSpecial((x/2**bits, y/2**bits)) for x in range(2**bits) for y in range(2**bits)]
 
 list.sort(codes)
 if plot:
